@@ -1,45 +1,50 @@
-import sqlite3
-from pathlib import Path
+import os
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "aqi.db"
+from dotenv import load_dotenv
+from supabase import create_client
+
+load_dotenv()
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS aqi_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            site_name TEXT,
-            county TEXT,
-            aqi INTEGER,
-            status TEXT,
-            pm25 REAL,
-            publish_time TEXT,
-            fetched_at TEXT DEFAULT (datetime('now', 'localtime'))
-        )
-    """)
-    return conn
+def get_client():
+    url = os.environ["SUPABASE_URL"]
+    key = os.environ["SUPABASE_SERVICE_KEY"]
+    return create_client(url, key)
 
 
 def insert_records(records):
-    conn = get_connection()
-    conn.executemany(
-        """INSERT INTO aqi_records (site_name, county, aqi, status, pm25, publish_time)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        records,
-    )
-    conn.commit()
-    conn.close()
+    rows = [
+        {
+            "site_name": site_name,
+            "county": county,
+            "aqi": aqi,
+            "status": status,
+            "pm25": pm25,
+            "publish_time": publish_time,
+        }
+        for site_name, county, aqi, status, pm25, publish_time in records
+    ]
+    get_client().table("aqi_records").insert(rows).execute()
 
 
 def fetch_history(days=7):
-    conn = get_connection()
-    rows = conn.execute(
-        """SELECT fetched_at, AVG(aqi) FROM aqi_records
-           WHERE fetched_at >= datetime('now', ?)
-           GROUP BY substr(fetched_at, 1, 13)
-           ORDER BY fetched_at""",
-        (f"-{days} days",),
-    ).fetchall()
-    conn.close()
-    return rows
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    resp = (
+        get_client()
+        .table("aqi_records")
+        .select("fetched_at, aqi")
+        .gte("fetched_at", since)
+        .execute()
+    )
+
+    buckets = defaultdict(list)
+    for row in resp.data:
+        if row["aqi"] is not None:
+            buckets[row["fetched_at"][:13]].append(row["aqi"])
+
+    return [
+        (hour, sum(values) / len(values))
+        for hour, values in sorted(buckets.items())
+    ]
