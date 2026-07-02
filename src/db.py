@@ -7,6 +7,8 @@ from supabase import create_client
 
 load_dotenv()
 
+TAIPEI = timezone(timedelta(hours=8))
+
 
 def get_client():
     url = os.environ["SUPABASE_URL"]
@@ -42,7 +44,8 @@ def fetch_history(days=7):
     buckets = defaultdict(list)
     for row in resp.data:
         if row["aqi"] is not None:
-            buckets[row["fetched_at"][:13]].append(row["aqi"])
+            hour = datetime.fromisoformat(row["fetched_at"]).astimezone(TAIPEI).strftime("%Y-%m-%dT%H")
+            buckets[hour].append(row["aqi"])
 
     return [
         (hour, sum(values) / len(values))

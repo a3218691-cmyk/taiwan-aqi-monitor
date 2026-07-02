@@ -32,6 +32,12 @@ export async function getLatestOverview(): Promise<AqiRecord[]> {
 
 export type TrendPoint = { hour: string; avgAqi: number };
 
+// 把 UTC 的 ISO 時間字串轉成台灣時間（UTC+8）的「到小時」key，例如 "2026-07-02T11"
+function taipeiHourKey(iso: string): string {
+  const shifted = new Date(new Date(iso).getTime() + 8 * 60 * 60 * 1000);
+  return shifted.toISOString().slice(0, 13);
+}
+
 export async function getTrend(days = 7): Promise<TrendPoint[]> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
@@ -44,7 +50,7 @@ export async function getTrend(days = 7): Promise<TrendPoint[]> {
   const buckets = new Map<string, number[]>();
   for (const row of data ?? []) {
     if (row.aqi == null) continue;
-    const hour = row.fetched_at.slice(0, 13);
+    const hour = taipeiHourKey(row.fetched_at);
     if (!buckets.has(hour)) buckets.set(hour, []);
     buckets.get(hour)!.push(row.aqi);
   }
