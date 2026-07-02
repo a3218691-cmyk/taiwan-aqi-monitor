@@ -27,8 +27,35 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
 
   const tickEvery = Math.ceil(points.length / 6);
 
+  // 依 maxAqi 取整齊的 Y 軸刻度（0 起，約 4~5 條）
+  const yStep = Math.ceil(maxAqi / 4 / 50) * 50;
+  const yTicks: number[] = [];
+  for (let v = 0; v <= maxAqi; v += yStep) yTicks.push(v);
+
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      {/* Y 軸水平格線與刻度數值 */}
+      {yTicks.map((v) => (
+        <g key={`y-${v}`}>
+          <line
+            x1={padding}
+            y1={toY(v)}
+            x2={width - padding}
+            y2={toY(v)}
+            stroke="currentColor"
+            className="text-zinc-200 dark:text-zinc-800"
+          />
+          <text
+            x={padding - 6}
+            y={toY(v) + 3}
+            fontSize={10}
+            textAnchor="end"
+            className="fill-zinc-500"
+          >
+            {v}
+          </text>
+        </g>
+      ))}
       <line
         x1={padding}
         y1={height - padding}

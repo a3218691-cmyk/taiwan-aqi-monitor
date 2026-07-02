@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 台灣空氣品質儀表板(前端)
 
-## Getting Started
+台灣空氣品質監控系統的前端儀表板,把後端累積在 Supabase 的 AQI 資料視覺化呈現。
 
-First, run the development server:
+**線上網址:** https://web-one-liard-15.vercel.app
+
+後端資料抓取、告警與自動化排程請見[專案根目錄 README](../README.md)。
+
+## 功能
+
+- **全台 AQI 概覽**:最新一輪所有測站的 AQI 與狀態,可依縣市篩選
+- **AQI 分級色塊圖例**:六段分級(良好 → 危害)顏色對照
+- **摘要卡片**:全台平均 AQI、橘警站數、目前最糟測站
+- **近 7 天趨勢圖**:全台平均 AQI 折線圖,純手刻 SVG,含 Y 軸刻度
+- **告警紀錄**:AQI ≥ 100 的歷史橘警事件
+- **深色模式**:跟隨系統設定自動切換
+
+## 技術棧
+
+- [Next.js](https://nextjs.org)(App Router)+ TypeScript
+- [Tailwind CSS](https://tailwindcss.com) v4
+- [Supabase](https://supabase.com) 作為資料來源(`@supabase/supabase-js`)
+- 趨勢圖為自畫 SVG,未使用任何圖表套件
+- 部署於 [Vercel](https://vercel.com)
+
+## 本地啟動
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+啟動後開 [http://localhost:3000](http://localhost:3000)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 環境變數
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+在 `web/` 底下建立 `.env.local`,填入 Supabase 專案的連線資訊:
 
-## Learn More
+| 變數 | 說明 |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon public key |
 
-To learn more about Next.js, take a look at the following resources:
+資料表為 `aqi_records`,由後端 Python 程式寫入(見根目錄 README)。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 部署
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+已連結 Vercel,可用 CLI 部署到 production:
 
-## Deploy on Vercel
+```bash
+vercel --prod
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+頁面設定 `revalidate = 600`(10 分鐘),資料會定期重新驗證,不需每次改動都重新部署。
