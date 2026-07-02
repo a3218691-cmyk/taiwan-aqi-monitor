@@ -1,5 +1,8 @@
 import { supabase } from "./supabase";
 
+// 橘警門檻。需與後端 src/fetch_aqi.py 的 ORANGE_THRESHOLD 保持一致。
+export const ALERT_THRESHOLD = 100;
+
 export type AqiRecord = {
   site_name: string;
   county: string;
@@ -11,23 +14,25 @@ export type AqiRecord = {
 };
 
 export async function getLatestOverview(): Promise<AqiRecord[]> {
+  // 每一輪抓取會用同一個 fetched_at 時間戳整批寫入，
+  // 所以先找出最新一輪的時間戳，再撈那一輪的全部測站，確保不漏站。
+  const { data: latest, error: latestError } = await supabase
+    .from("aqi_records")
+    .select("fetched_at")
+    .order("fetched_at", { ascending: false })
+    .limit(1);
+
+  if (latestError) throw latestError;
+  if (!latest || latest.length === 0) return [];
+
   const { data, error } = await supabase
     .from("aqi_records")
     .select("site_name, county, aqi, status, pm25, publish_time, fetched_at")
-    .order("fetched_at", { ascending: false })
-    .limit(200);
+    .eq("fetched_at", latest[0].fetched_at)
+    .order("aqi", { ascending: false, nullsFirst: false });
 
   if (error) throw error;
-
-  const latestBySite = new Map<string, AqiRecord>();
-  for (const row of data ?? []) {
-    if (!latestBySite.has(row.site_name)) {
-      latestBySite.set(row.site_name, row);
-    }
-  }
-  return Array.from(latestBySite.values()).sort(
-    (a, b) => (b.aqi ?? 0) - (a.aqi ?? 0)
-  );
+  return (data ?? []) as AqiRecord[];
 }
 
 export type TrendPoint = { hour: string; avgAqi: number };
@@ -67,7 +72,7 @@ export async function getAlerts(limit = 50): Promise<AqiRecord[]> {
   const { data, error } = await supabase
     .from("aqi_records")
     .select("site_name, county, aqi, status, pm25, publish_time, fetched_at")
-    .gte("aqi", 100)
+    .gte("aqi", ALERT_THRESHOLD)
     .order("fetched_at", { ascending: false })
     .limit(limit);
 
