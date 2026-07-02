@@ -38,6 +38,15 @@ export default function TrendChart({ points }: { points: TrendPoint[] }) {
         className="text-zinc-300 dark:text-zinc-700"
       />
       <path d={linePath} fill="none" stroke="#f97316" strokeWidth={2} />
+      {points.map((p, i) => (
+        <circle
+          key={`dot-${p.hour}`}
+          cx={padding + i * stepX}
+          cy={toY(p.avgAqi)}
+          r={3}
+          fill="#f97316"
+        />
+      ))}
       {points.map((p, i) =>
         i % tickEvery === 0 ? (
           <text
