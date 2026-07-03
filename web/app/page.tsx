@@ -35,7 +35,7 @@ export default async function Home() {
           </h1>
           {latestFetchedAt && (
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              最後更新：{new Date(latestFetchedAt).toLocaleString("zh-TW", { hour12: false })}
+              最後更新：{new Date(latestFetchedAt).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })}
             </p>
           )}
         </header>
@@ -104,7 +104,7 @@ export default async function Home() {
                       className="border-t border-zinc-200 dark:border-zinc-800"
                     >
                       <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">
-                        {new Date(row.fetched_at).toLocaleString("zh-TW", { hour12: false })}
+                        {new Date(row.fetched_at).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })}
                       </td>
                       <td className="px-4 py-2">{row.county}</td>
                       <td className="px-4 py-2">{row.site_name}</td>
