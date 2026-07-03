@@ -89,3 +89,14 @@ export function aqiColor(aqi: number | null): string {
   if (aqi <= 300) return "bg-purple-700 text-white";
   return "bg-rose-900 text-white";
 }
+
+// 與 aqiColor 同分級的實際色碼，供 SVG fill 使用（Tailwind class 不能直接當 fill）。
+export function aqiHex(aqi: number | null): string {
+  if (aqi == null) return "#d1d5db";
+  if (aqi <= 50) return "#22c55e";
+  if (aqi <= 100) return "#facc15";
+  if (aqi <= 150) return "#f97316";
+  if (aqi <= 200) return "#dc2626";
+  if (aqi <= 300) return "#7e22ce";
+  return "#881337";
+}
