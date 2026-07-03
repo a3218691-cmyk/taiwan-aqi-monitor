@@ -45,7 +45,7 @@ npm run dev
 
 ## 部署
 
-已連結 Vercel,可用 CLI 部署到 production:
+**目前未接 GitHub 自動部署:`git push` 只會更新程式碼,不會讓網站上線。** 改完前端要手動在 `web/` 底下跑一次 CLI 部署到 production:
 
 ```bash
 vercel --prod
