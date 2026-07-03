@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "台灣空氣品質監測",
-  description: "全台 AQI 即時概覽、趨勢與告警紀錄",
+  description: "全台 AQI 即時概覽、趨勢與告警事件",
 };
 
 export default function RootLayout({
