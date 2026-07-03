@@ -82,16 +82,16 @@ export default async function Home() {
 
         <section>
           <h2 className="mb-4 text-lg font-medium text-black dark:text-zinc-50">
-            告警紀錄（AQI ≥ {ALERT_THRESHOLD}）
+            告警事件（測站跨越 AQI {ALERT_THRESHOLD}）
           </h2>
           {alerts.length === 0 ? (
-            <p className="text-zinc-500">近期無告警紀錄</p>
+            <p className="text-zinc-500">近期無告警事件</p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
               <table className="w-full text-sm">
                 <thead className="bg-zinc-100 dark:bg-zinc-900 text-left">
                   <tr>
-                    <th className="px-4 py-2">時間</th>
+                    <th className="px-4 py-2">超標時間</th>
                     <th className="px-4 py-2">縣市</th>
                     <th className="px-4 py-2">測站</th>
                     <th className="px-4 py-2">AQI</th>

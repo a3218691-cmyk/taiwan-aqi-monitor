@@ -69,15 +69,32 @@ export async function getTrend(days = 7): Promise<TrendPoint[]> {
 }
 
 export async function getAlerts(limit = 50): Promise<AqiRecord[]> {
+  // 抓最近一批讀數（含未超標的，才判斷得出「跨越」門檻的瞬間），在伺服器端偵測告警事件。
   const { data, error } = await supabase
     .from("aqi_records")
     .select("site_name, county, aqi, status, pm25, publish_time, fetched_at")
-    .gte("aqi", ALERT_THRESHOLD)
     .order("fetched_at", { ascending: false })
-    .limit(limit);
+    .limit(2000);
 
   if (error) throw error;
-  return data ?? [];
+
+  // 轉成由舊到新，逐站掃描：上一筆 < 門檻、這一筆 ≥ 門檻 = 一次「開始超標」事件。
+  // 同一站持續超標不會重複記，直到它掉回門檻以下再次跨越才算新事件。
+  const rows = (data ?? []).slice().reverse();
+  const prevAqi = new Map<string, number>();
+  const events: AqiRecord[] = [];
+  for (const r of rows) {
+    if (r.aqi == null) continue;
+    const prev = prevAqi.get(r.site_name);
+    if (prev !== undefined && prev < ALERT_THRESHOLD && r.aqi >= ALERT_THRESHOLD) {
+      events.push(r);
+    }
+    prevAqi.set(r.site_name, r.aqi);
+  }
+
+  // 最新事件排最上面
+  events.reverse();
+  return events.slice(0, limit);
 }
 
 export function aqiColor(aqi: number | null): string {
