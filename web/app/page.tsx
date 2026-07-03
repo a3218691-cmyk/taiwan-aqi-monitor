@@ -1,4 +1,4 @@
-import { getAlerts, getLatestOverview, getTrend, aqiColor } from "@/lib/aqi";
+import { getAlerts, getLatestOverview, getTrend, aqiColor, ALERT_THRESHOLD } from "@/lib/aqi";
 import TrendChart from "@/components/TrendChart";
 import OverviewTable from "@/components/OverviewTable";
 
@@ -19,7 +19,7 @@ export default async function Home() {
     valid.length > 0
       ? Math.round(valid.reduce((s, r) => s + (r.aqi as number), 0) / valid.length)
       : null;
-  const orangeCount = overview.filter((r) => (r.aqi ?? 0) >= 100).length;
+  const orangeCount = overview.filter((r) => (r.aqi ?? 0) >= ALERT_THRESHOLD).length;
   const worst = valid.reduce<typeof valid[number] | null>(
     (max, r) => (max === null || (r.aqi as number) > (max.aqi as number) ? r : max),
     null
@@ -78,7 +78,7 @@ export default async function Home() {
 
         <section>
           <h2 className="mb-4 text-lg font-medium text-black dark:text-zinc-50">
-            告警紀錄（AQI ≥ 100）
+            告警紀錄（AQI ≥ {ALERT_THRESHOLD}）
           </h2>
           {alerts.length === 0 ? (
             <p className="text-zinc-500">近期無告警紀錄</p>
