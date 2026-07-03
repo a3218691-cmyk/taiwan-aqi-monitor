@@ -15,7 +15,7 @@ GitHub Actions (每小時排程)
 src/run.py
     ├─ fetch_aqi.py   抓取全台測站即時 AQI（環境部開放資料 API）
     ├─ db.py          存入 SQLite，累積歷史資料
-    ├─ notify.py      AQI ≥ 70（橘警）時發送 Telegram 通知
+    ├─ notify.py      AQI ≥ 50（橘警）時發送 Telegram 通知
     └─ plot_trend.py  產出近 7 天全台平均 AQI 趨勢圖
     │
     ▼
@@ -34,7 +34,7 @@ data/aqi.db、charts/trend.png 自動 commit 回 repo
 - **AQI 分級色塊圖例**:六段分級(良好 → 危害)顏色對照,一眼看懂數值代表的健康等級
 - **摘要卡片**:全台平均 AQI、橘警站數、目前最糟測站
 - **近 7 天趨勢圖**:全台平均 AQI 折線圖,純手刻 SVG(無額外圖表套件),含 Y 軸刻度
-- **告警紀錄**:列出 AQI ≥ 70 的歷史橘警事件
+- **告警紀錄**:列出 AQI ≥ 50 的歷史橘警事件
 - **深色模式**:跟隨系統設定自動切換
 
 前端原始碼與說明見 [`web/`](web/)。

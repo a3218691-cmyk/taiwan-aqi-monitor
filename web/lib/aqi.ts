@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 // 橘警門檻。需與後端 src/fetch_aqi.py 的 ORANGE_THRESHOLD 保持一致。
-export const ALERT_THRESHOLD = 70;
+export const ALERT_THRESHOLD = 50;
 
 export type AqiRecord = {
   site_name: string;
