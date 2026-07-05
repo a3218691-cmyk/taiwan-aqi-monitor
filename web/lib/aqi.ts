@@ -68,33 +68,68 @@ export async function getTrend(days = 7): Promise<TrendPoint[]> {
     }));
 }
 
-export async function getAlerts(limit = 50): Promise<AqiRecord[]> {
-  // 抓最近一批讀數（含未超標的，才判斷得出「跨越」門檻的瞬間），在伺服器端偵測告警事件。
+// 一波超標事件：測站連續 ≥ 門檻的一段時間。進行中與已結束都保留。
+export type AlertEpisode = {
+  site_name: string;
+  county: string;
+  peak: number; // 這波超標的峰值 AQI
+  startAt: string; // 跨過門檻的時間
+  endAt: string | null; // 掉回門檻以下的時間；null = 進行中
+  ongoing: boolean;
+};
+
+export async function getAlerts(limit = 50): Promise<AlertEpisode[]> {
+  // 抓最近一批讀數（含未超標的，才判斷得出一波的起訖）。
   const { data, error } = await supabase
     .from("aqi_records")
-    .select("site_name, county, aqi, status, pm25, publish_time, fetched_at")
+    .select("site_name, county, aqi, fetched_at")
     .order("fetched_at", { ascending: false })
-    .limit(2000);
+    .limit(3000);
 
   if (error) throw error;
 
-  // 轉成由舊到新，逐站掃描：上一筆 < 門檻、這一筆 ≥ 門檻 = 一次「開始超標」事件。
-  // 同一站持續超標不會重複記，直到它掉回門檻以下再次跨越才算新事件。
-  const rows = (data ?? []).slice().reverse();
-  const prevAqi = new Map<string, number>();
-  const events: AqiRecord[] = [];
+  const rows = (data ?? []).slice().reverse(); // 由舊到新
+  type Open = { county: string; peak: number; startAt: string };
+  const open = new Map<string, Open>(); // 每站目前開著的那一波
+  const episodes: AlertEpisode[] = [];
+
   for (const r of rows) {
-    if (r.aqi == null) continue;
-    const prev = prevAqi.get(r.site_name);
-    if (prev !== undefined && prev < ALERT_THRESHOLD && r.aqi >= ALERT_THRESHOLD) {
-      events.push(r);
+    if (r.aqi == null) continue; // 缺值略過，不當成掉回門檻
+    const cur = open.get(r.site_name);
+    if (r.aqi >= ALERT_THRESHOLD) {
+      if (cur) cur.peak = Math.max(cur.peak, r.aqi);
+      else open.set(r.site_name, { county: r.county, peak: r.aqi, startAt: r.fetched_at });
+    } else if (cur) {
+      // 掉回門檻以下 → 這波結束
+      episodes.push({
+        site_name: r.site_name,
+        county: cur.county,
+        peak: cur.peak,
+        startAt: cur.startAt,
+        endAt: r.fetched_at,
+        ongoing: false,
+      });
+      open.delete(r.site_name);
     }
-    prevAqi.set(r.site_name, r.aqi);
+  }
+  // 掃完仍開著的 = 進行中
+  for (const [site, cur] of open) {
+    episodes.push({
+      site_name: site,
+      county: cur.county,
+      peak: cur.peak,
+      startAt: cur.startAt,
+      endAt: null,
+      ongoing: true,
+    });
   }
 
-  // 最新事件排最上面
-  events.reverse();
-  return events.slice(0, limit);
+  // 進行中排前面，再依開始時間新到舊
+  episodes.sort((a, b) => {
+    if (a.ongoing !== b.ongoing) return a.ongoing ? -1 : 1;
+    return a.startAt < b.startAt ? 1 : -1;
+  });
+  return episodes.slice(0, limit);
 }
 
 export function aqiColor(aqi: number | null): string {

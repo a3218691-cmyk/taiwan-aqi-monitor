@@ -82,40 +82,59 @@ export default async function Home() {
 
         <section>
           <h2 className="mb-4 text-lg font-medium text-black dark:text-zinc-50">
-            告警事件（測站跨越 AQI {ALERT_THRESHOLD}）
+            超標事件（AQI ≥ {ALERT_THRESHOLD}，含進行中／已結束）
           </h2>
           {alerts.length === 0 ? (
-            <p className="text-zinc-500">近期無告警事件</p>
+            <p className="text-zinc-500">近期無超標事件</p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
               <table className="w-full text-sm">
                 <thead className="bg-zinc-100 dark:bg-zinc-900 text-left">
                   <tr>
-                    <th className="px-4 py-2">超標時間</th>
+                    <th className="px-4 py-2">開始時間</th>
                     <th className="px-4 py-2">縣市</th>
                     <th className="px-4 py-2">測站</th>
-                    <th className="px-4 py-2">AQI</th>
+                    <th className="px-4 py-2">峰值</th>
+                    <th className="px-4 py-2">狀態</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {alerts.map((row, i) => (
+                  {alerts.map((ep, i) => (
                     <tr
-                      key={`${row.site_name}-${row.fetched_at}-${i}`}
+                      key={`${ep.site_name}-${ep.startAt}-${i}`}
                       className="border-t border-zinc-200 dark:border-zinc-800"
                     >
                       <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">
-                        {new Date(row.fetched_at).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })}
+                        {new Date(ep.startAt).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })}
                       </td>
-                      <td className="px-4 py-2">{row.county}</td>
-                      <td className="px-4 py-2">{row.site_name}</td>
+                      <td className="px-4 py-2">{ep.county}</td>
+                      <td className="px-4 py-2">{ep.site_name}</td>
                       <td className="px-4 py-2">
                         <span
                           className={`inline-block min-w-10 rounded px-2 py-0.5 text-center font-medium ${aqiColor(
-                            row.aqi
+                            ep.peak
                           )}`}
                         >
-                          {row.aqi}
+                          {ep.peak}
                         </span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {ep.ongoing ? (
+                          <span className="text-red-500">🔴 進行中</span>
+                        ) : (
+                          <span className="text-zinc-500 dark:text-zinc-400">
+                            ✓ 已結束{" "}
+                            {ep.endAt &&
+                              new Date(ep.endAt).toLocaleString("zh-TW", {
+                                timeZone: "Asia/Taipei",
+                                month: "numeric",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              })}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
