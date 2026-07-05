@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_URL = "https://data.moenv.gov.tw/api/v2/aqx_p_432"
-ORANGE_THRESHOLD = 50  # 橘警：對敏感族群不健康
+ORANGE_THRESHOLD = 70  # 橘警：對敏感族群不健康
 RED_THRESHOLD = 150     # 紅害：對所有族群不健康
 
 
